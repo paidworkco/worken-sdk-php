@@ -2,7 +2,7 @@
 
 <br />
 <p align="center">
-  <img src="paidwork-logo-header-mobile-bitlabs" alt="VPaidwork" />
+  <img src="https://zrcdn.net/images/logos/paidwork/paidwork-logo-header-mobile-bitlabs.png" alt="Paidwork" />
 </p>
 
 <h3 align="center">

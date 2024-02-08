@@ -33,5 +33,13 @@ class Worken {
         return $this->walletService->getBalance($address);
     }
 
+    public function getInformation($address) {
+        return $this->walletService->getInformation($address);
+    }
+
+    public function createWallet() {
+        return $this->walletService->createWallet();
+    }
+
     // Metody delegujące do odpowiednich usług
 }

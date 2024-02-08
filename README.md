@@ -36,3 +36,12 @@
 </p>
 
 SDK library providing access to make easy and secure transactions with Worken
+
+Feel free to try out our provided Postman collection. Simply click the button below to fork the collection and start testing.<br>
+[<img src="https://run.pstmn.io/button.svg" alt="Run In Postman" style="width: 128px; height: 32px;">](https://god.gw.postman.com/run-collection/32839969-fd54da1c-0e5b-43e8-9d89-8330e9bebf17?action=collection%2Ffork&source=rip_markdown&collection-url=entityId%3D32839969-fd54da1c-0e5b-43e8-9d89-8330e9bebf17%26entityType%3Dcollection%26workspaceId%3Dbeab0417-9a12-472d-8f22-3c7c478123a9)
+
+## Configuration
+
+To ensure flexibility and ease of integration, the Worken SDK allows for configuration through environmental variables. These variables can be set directly in your project's .env file. Below is a list of available configuration variables along with their descriptions:
+
+`WORKEN_OPENSSL_CONF`: Path to your OpenSSL configuration file. Setting this variable is optional but recommended if the default OpenSSL configuration in your environment does not meet the SDK requirements. This is particularly useful for cryptographic key generation, where specific configuration may be required.

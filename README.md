@@ -19,9 +19,6 @@
     <a href="https://x.com/paidworkco">
         <img alt="Follow Us on X" src="https://img.shields.io/twitter/follow/paidworkco?style=social" />
     </a>
-    <a href="https://www.youtube.com/c/paidwork">
-        <img alt="Subscribe on our Youtube Channel" src="https://img.shields.io/youtube/channel/subscribers/paidwork?style=social" />
-    </a>
 </p>
 <p align="center">
     <a href="http://commitizen.github.io/cz-cli/">

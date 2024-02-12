@@ -1,0 +1,16 @@
+{
+    "name": "paidworkco/worken-sdk",
+    "description": "Make and receive secure transactions with Worken",
+    "type": "library",
+    "require": {
+      "php": ">=8.1",
+      "web3p/web3.php": "dev-master"
+    },
+    "license": "MIT",
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Worken\\": "src/"
+        }
+    }
+  }

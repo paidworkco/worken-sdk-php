@@ -3,6 +3,7 @@ namespace Worken\Services;
 
 use Web3\Contract;
 use Web3\Utils;
+use phpseclib\Math\BigInteger;
 
 class WalletService {
     private $web3;
@@ -14,38 +15,45 @@ class WalletService {
         $this->contractAddress = $contractAddress;
     }
 
-    public function getBalance($address) {
-        $contract = new Contract($this->web3->provider, $this->getERC20ABI());
+    /**
+     * Get balance of given wallet address
+     * 
+     * @param string $address
+     * @return string
+     */
+    public function getBalance(string $address) {
+        $contract = new Contract($this->web3->provider, $this->getERC20ABIBalance());
         $contract->at($this->contractAddress);
 
         $balance = null;
+        
         $contract->call('balanceOf', $address, function ($err, $result) use (&$balance) {
             if ($err !== null) {
                 //TO DO: error handlings
                 return;
             }
-            $balance = bcdiv($result['balance'], bcpow('10', '18'), 18);
+
+            $balancestring = $result['balance']->toString();
+            $balancetokens = bcdiv($balancestring, bcpow('10', '18'), 0);
+            $balance = intval($balancetokens);
         });
 
         return $balance;
     }
-
-    public function getInformation($address) {
+    
+    /**
+     * Get information about wallet
+     * 
+     * @param string $address
+     * @return array
+     */
+    public function getInformation(string $address) {
         $info = [];
-        
-        // saldo
-        $this->web3->eth->getBalance($address, function ($err, $balance) use (&$info) {
-            if ($err !== null) {
-                $info['balanceError'] = 'Nie można pobrać salda.';
-                return;
-            }
-            $info['balance'] = Utils::toEther($balance, 'wei');
-        });
 
         // nonce (liczby transakcji)
         $this->web3->eth->getTransactionCount($address, function ($err, $nonce) use (&$info) {
             if ($err !== null) {
-                $info['nonceError'] = 'Nie można pobrać nonce.';
+                $info['nonceError'] = 'Error while getting nonce';
                 return;
             }
             $info['nonce'] = $nonce->toString();
@@ -82,15 +90,52 @@ class WalletService {
     
         return [
             'privateKey' => $privKey,
-            'publicKey' => $keyDetails['publicKey']
+            'publicKey' => $keyDetails
         ];
     }
 
-    public function getHistory($address) {
-        return null;
+    /**
+     * Get history of transactions for given address
+     * 
+     * @param string $address
+     * @return array
+     */
+    public function getHistory(string $address) {
+        $polygonscanAPIKey = getenv('WORKEN_POLYGONSCAN_APIKEY');
+        if($polygonscanAPIKey) {
+            $this->EtherscanAPI = "https://api.polygonscan.com/api?module=account&action=txlist&address={$address}&startblock=0&endblock=99999999&sort=asc&apikey={$polygonscanAPIKey}";
+        } else {
+            return "Empty API key, please set WORKEN_POLYGONSCAN_APIKEY in your environment variables. You can get it from https://polygonscan.com/apis";
+        }
+        $response = file_get_contents($this->EtherscanAPI);
+        $data = json_decode($response, true);
+
+        $history = [];
+        if ($data['status'] == '1' && $data['message'] == 'OK') {
+            foreach ($data['result'] as $transaction) {
+                $history[] = [
+                    'blockNumber' => $transaction['blockNumber'],
+                    'timeStamp' => date('Y-m-d H:i:s', $transaction['timeStamp']),
+                    'hash' => $transaction['hash'],
+                    'nonce' => $transaction['nonce'],
+                    'blockHash' => $transaction['blockHash'],
+                    'transactionIndex' => $transaction['transactionIndex'],
+                    'from' => $transaction['from'],
+                    'to' => $transaction['to'],
+                    'value' => $transaction['value'],
+                    'gas' => $transaction['gas'],
+                    'gasPrice' => $transaction['gasPrice'],
+                    'isError' => $transaction['isError'],
+                    'txreceipt_status' => $transaction['txreceipt_status'],
+                ];
+                return $history;
+            }
+        } else {
+            return $data['message'];
+        }
     }
 
-    private function getERC20ABI() {
+    private function getERC20ABIBalance() {
         return '[
             {
               "constant": true,

@@ -9,37 +9,29 @@ use Worken\Services\WalletService;
 use Web3\Web3;
 
 class Worken {
-    private $walletService;
-    private $transactionService;
-    private $contractService;
-    private $networkService;
+    public $wallet;
+    public $transaction;
+    public $contract;
+    public $network;
     private $web3;
     private $contractAddress;
     private $nodeUrl;
 
-    public function __construct($nodeUrl, $contractAddress) {
-        $this->web3 = new Web3($nodeUrl);
-        $this->contractAddress = $contractAddress;
-        $this->nodeUrl = $nodeUrl;
 
-        $this->walletService = new WalletService($this->web3, $this->contractAddress);
+    /**
+     * Worken constructor
+     * 
+     * @param string $nodeUrl
+     * @param string $contractAddress
+     */
+    public function __construct() {
+        $this->contractAddress = "0x3AE0726b5155fCa70dd79C0839B07508Ce7F0F13";
+        $this->nodeUrl = "https://rpc-mumbai.maticvigil.com/";
+        $this->web3 = new Web3($this->nodeUrl);
+
+        $this->wallet = new WalletService($this->web3, $this->contractAddress);
         // $this->transactionService = new TransactionService($this->web3);
         // $this->contractService = new ContractService($this->web3, $this->contractAddress);
         // $this->networkService = new NetworkService($this->web3);
     }
-
-    //Wallet Service
-    public function getBalance($address) {
-        return $this->walletService->getBalance($address);
-    }
-
-    public function getInformation($address) {
-        return $this->walletService->getInformation($address);
-    }
-
-    public function createWallet() {
-        return $this->walletService->createWallet();
-    }
-
-    // Metody delegujące do odpowiednich usług
 }

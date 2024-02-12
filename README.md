@@ -19,9 +19,6 @@
     <a href="https://x.com/paidworkco">
         <img alt="Follow Us on X" src="https://img.shields.io/twitter/follow/paidworkco?style=social" />
     </a>
-    <a href="https://www.youtube.com/c/paidwork">
-        <img alt="Subscribe on our Youtube Channel" src="https://img.shields.io/youtube/channel/subscribers/paidwork?style=social" />
-    </a>
 </p>
 <p align="center">
     <a href="http://commitizen.github.io/cz-cli/">
@@ -68,7 +65,7 @@ Outputs amount of WORK tokens in `int` type of your wallet address.
 
 #### Get wallet information
 ```php
-$worken->wallet->getInformation($testAddress)
+$worken->wallet->getInformation($address)
 ```
 | Parameter | Type     | Description                       |
 | :-------- | :------- | :-------------------------------- |
@@ -79,7 +76,7 @@ TO DO: more informations
 
 #### Get wallet transaction history
 ```php
-$worken->wallet->getHistory($testAddress)
+$worken->wallet->getHistory($address)
 ```
 | Parameter | Type     | Description                       |
 | :-------- | :------- | :-------------------------------- |

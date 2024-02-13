@@ -2,17 +2,17 @@
 namespace Worken\Services;
 
 use Web3\Contract;
-use Web3\Utils;
-use phpseclib\Math\BigInteger;
+use Web3\Web3;
 
 class WalletService {
     private $web3;
     private $contractAddress;
-    private $EtherscanAPI = "";
+    private $apiKey;
 
-    public function __construct($web3, $contractAddress) {
+    public function __construct(Web3 $web3, string $contractAddress, string $apiKey) {
         $this->web3 = $web3;
         $this->contractAddress = $contractAddress;
+        $this->apiKey = $apiKey;
     }
 
     /**
@@ -101,13 +101,12 @@ class WalletService {
      * @return array
      */
     public function getHistory(string $address) {
-        $polygonscanAPIKey = getenv('WORKEN_POLYGONSCAN_APIKEY');
-        if($polygonscanAPIKey) {
-            $this->EtherscanAPI = "https://api.polygonscan.com/api?module=account&action=txlist&address={$address}&startblock=0&endblock=99999999&sort=asc&apikey={$polygonscanAPIKey}";
+        if($this->apiKey) {
+            $url = "https://api.polygonscan.com/api?module=account&action=txlist&address={$address}&startblock=0&endblock=99999999&sort=asc&apikey={$this->apiKey}";
         } else {
             return "Empty API key, please set WORKEN_POLYGONSCAN_APIKEY in your environment variables. You can get it from https://polygonscan.com/apis";
         }
-        $response = file_get_contents($this->EtherscanAPI);
+        $response = file_get_contents($url);
         $data = json_decode($response, true);
 
         $history = [];

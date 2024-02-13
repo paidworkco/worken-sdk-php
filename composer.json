@@ -4,7 +4,8 @@
     "type": "library",
     "require": {
       "php": ">=8.1",
-      "web3p/web3.php": "dev-master"
+      "web3p/web3.php": "dev-master",
+      "kornrunner/keccak": "^1.1"
     },
     "license": "MIT",
     "minimum-stability": "dev",

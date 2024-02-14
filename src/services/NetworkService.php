@@ -99,9 +99,9 @@ class NetworkService {
         if ($gasData !== false) {
             $gasData = json_decode($gasData, true);
             if ($gasData['status'] == '1' && isset($gasData['result'])) {
-                $status['GasPrice']['Safe'] = $gasData['result']['SafeGasPrice'];
-                $status['GasPrice']['Propose'] = $gasData['result']['ProposeGasPrice'];
-                $status['GasPrice']['Fast'] = $gasData['result']['FastGasPrice'];
+                $status['GasPrice']['Safe'] = (float)$gasData['result']['SafeGasPrice'];
+                $status['GasPrice']['Propose'] = (float)$gasData['result']['ProposeGasPrice'];
+                $status['GasPrice']['Fast'] = (float)$gasData['result']['FastGasPrice'];
             } else {
                 $status['GasPrice']['error'] = "Could not retrieve gas price data";
             }

@@ -3,9 +3,12 @@
     "description": "Make and receive secure transactions with Worken",
     "type": "library",
     "require": {
-      "php": ">=8.1",
+      "php": "^8.1",
+      "ext-gmp": "*",
       "web3p/web3.php": "dev-master",
-      "kornrunner/keccak": "^1.1"
+      "kornrunner/keccak": "^1.1",
+      "bitwasp/bitcoin": "0.0.35.x-dev",
+      "furqansiddiqui/bip39-mnemonic-php": "dev-master"
     },
     "license": "MIT",
     "minimum-stability": "dev",

@@ -5,8 +5,8 @@ use Web3\Contract;
 use Web3\Web3;
 use Worken\Utils\Converter;
 use Worken\Utils\ABI;
-use Worken\Exceptions\Web3ConnectException;
-use Worken\Exceptions\APIException;
+use Worken\Utils\KeyFactory;
+
 
 class WalletService {
     private $web3;
@@ -33,13 +33,11 @@ class WalletService {
         
         $contract->call('balanceOf', $address, function ($err, $balance) use (&$result) {
             if ($err !== null) {
-                throw new Web3ConnectException($err->getMessage());
-                return;
+                return $result['walletBalanceWORK']['error'] = $err->getMessage();
             }
-            $result['balanceWORKWEI'] = $balance['balance']->toString();
-            $result['balanceWORKEther'] = Converter::convertWEItoEther($result['balanceWORKWEI']); // Convert to Ether
-            $result['balanceWORK'] = intval($result['balanceWORKEther']);
-            $result['balanceWORKHex'] = "0x" . $balance['balance']->toHex(); // 0x... hex value
+            $result['walletBalanceWORK']['WEI'] = $balance['balance']->toString();
+            $result['walletBalanceWORK']['Ether'] = Converter::convertWEItoEther($result['walletBalanceWORK']['WEI']); // Convert to Ether
+            $result['walletBalanceWORK']['Hex'] = "0x" . $balance['balance']->toHex(); // 0x... hex value
         });
 
         return $result;
@@ -57,7 +55,7 @@ class WalletService {
         // nonce (liczby transakcji)
         $this->web3->eth->getTransactionCount($address, function ($err, $nonce) use (&$info) {
             if ($err !== null) {
-                throw new Web3ConnectException($err->getMessage());
+                $info['nonce']['error'] = $err->getMessage();
             }
             $info['nonce'] = $nonce->toString();
         });
@@ -67,35 +65,20 @@ class WalletService {
         return $info;
     }
 
-    // TO DO - create wallet, not finished
-    public function createWallet() {
-        $configargs = array(
-            'private_key_bits' => 2048,
-            'default_md' => "sha256",
-        );
-        $opensslConfigPath = getenv('WORKEN_OPENSSL_CONF') ?: __DIR__ . '/assets/openssl.cnf'; 
-        if (file_exists($opensslConfigPath)) {
-            $configargs['config'] = $opensslConfigPath;
-        }
-    
-        $res = openssl_pkey_new($configargs);
-    
-        if (!$res) {
-            return "error";
-        }
-        if (!openssl_pkey_export($res, $privKey, NULL, $configargs)) {
-            return "error_exporting_key";
-        }
-        $keyDetails = openssl_pkey_get_details($res);
-        if (!$keyDetails) {
-            return "error_getting_details"; 
-        }
-        $privKey = $keyDetails['key']; 
-    
-        return [
-            'privateKey' => $privKey,
-            'publicKey' => $keyDetails
-        ];
+    // required gmp extension in php.ini
+    public function createWallet(int $words)
+    {
+        $result = [];
+
+        $seedphrase = KeyFactory::generateSeedPhrase($words);
+        $result['seedphrase'] = $seedphrase->words;
+
+        $keys = KeyFactory::generateKeysfromSeedPhrase($seedphrase->entropy);
+        $result['privateKey'] = $keys->privateKey;
+        $result['publicKey'] = $keys->publicKey;
+        $result['publicKeyCompressed'] = $keys->publicKeyCompressed;
+        $result['address'] = KeyFactory::generateAddressfromPublicKey($keys->publicKey);
+        return $result;
     }
 
     /**
@@ -105,36 +88,44 @@ class WalletService {
      * @return array
      */
     public function getHistory(string $address) {
-        if($this->apiKey) {
-            $url = "https://api.polygonscan.com/api?module=account&action=txlist&address={$address}&startblock=0&endblock=99999999&sort=asc&apikey={$this->apiKey}";
-        } else {
-            throw new APIException("Empty API key, please set WORKEN_POLYGONSCAN_APIKEY in your environment variables. You can get it from https://polygonscan.com/apis");
+        if (empty($this->apiKey)) {
+            $history['error'] = "Empty API key, please set WORKEN_POLYGONSCAN_APIKEY in your environment variables. You can get it from https://polygonscan.com/apis";
         }
-        $response = file_get_contents($url);
-        $result = json_decode($response, true);
-
+    
+        $url = "https://api.polygonscan.com/api?module=account&action=txlist&address={$address}&startblock=0&endblock=99999999&sort=asc&apikey={$this->apiKey}";
         $history = [];
-        if ($result['status'] == '1' && $result['message'] == 'OK') {
-            foreach ($result['result'] as $transaction) {
-                $history[] = [
-                    'blockNumber' => $transaction['blockNumber'],
-                    'timeStamp' => date('Y-m-d H:i:s', $transaction['timeStamp']),
-                    'hash' => $transaction['hash'],
-                    'nonce' => $transaction['nonce'],
-                    'blockHash' => $transaction['blockHash'],
-                    'transactionIndex' => $transaction['transactionIndex'],
-                    'from' => $transaction['from'],
-                    'to' => $transaction['to'],
-                    'value' => $transaction['value'],
-                    'gas' => $transaction['gas'],
-                    'gasPrice' => $transaction['gasPrice'],
-                    'isError' => $transaction['isError'],
-                    'txreceipt_status' => $transaction['txreceipt_status'],
-                ];
+        $response = file_get_contents($url);
+        if ($response === FALSE) {
+            $history['error'] = "Error while fetching data from Polygonscan.";
+        }
+
+        $result = json_decode($response, true);
+    
+        if ($result['status'] == '0') {
+            if ($result['message'] == 'No transactions found') {
                 return $history;
             }
-        } else {
-            throw new APIException($result['message']);
+            $result['error'] = $result['message'];
         }
+
+        foreach ($result['result'] as $transaction) {
+            $history[] = [
+                'blockNumber' => $transaction['blockNumber'],
+                'timeStamp' => date('Y-m-d H:i:s', $transaction['timeStamp']),
+                'hash' => $transaction['hash'],
+                'nonce' => $transaction['nonce'],
+                'blockHash' => $transaction['blockHash'],
+                'transactionIndex' => $transaction['transactionIndex'],
+                'from' => $transaction['from'],
+                'to' => $transaction['to'],
+                'value' => $transaction['value'],
+                'gas' => $transaction['gas'],
+                'gasPrice' => $transaction['gasPrice'],
+                'isError' => $transaction['isError'],
+                'txreceipt_status' => $transaction['txreceipt_status'],
+            ];
+        }
+    
+        return $history;
     }
 }

@@ -4,6 +4,9 @@ namespace Worken\Services;
 use Web3\Contract;
 use Web3\Web3;
 use Worken\Utils\Converter;
+use Worken\Utils\ABI;
+use Worken\Exceptions\Web3ConnectException;
+use Worken\Exceptions\APIException;
 
 class WalletService {
     private $web3;
@@ -23,14 +26,14 @@ class WalletService {
      * @return string
      */
     public function getBalance(string $address) {
-        $contract = new Contract($this->web3->provider, $this->getERC20ABIBalance());
+        $contract = new Contract($this->web3->provider, ABI::ERC20Balance());
         $contract->at($this->contractAddress);
 
         $result = [];
         
         $contract->call('balanceOf', $address, function ($err, $balance) use (&$result) {
             if ($err !== null) {
-                //TO DO: error handlings
+                throw new Web3ConnectException($err->getMessage());
                 return;
             }
             $result['balanceWORKWEI'] = $balance['balance']->toString();
@@ -54,8 +57,7 @@ class WalletService {
         // nonce (liczby transakcji)
         $this->web3->eth->getTransactionCount($address, function ($err, $nonce) use (&$info) {
             if ($err !== null) {
-                $info['nonceError'] = 'Error while getting nonce';
-                return;
+                throw new Web3ConnectException($err->getMessage());
             }
             $info['nonce'] = $nonce->toString();
         });
@@ -106,14 +108,14 @@ class WalletService {
         if($this->apiKey) {
             $url = "https://api.polygonscan.com/api?module=account&action=txlist&address={$address}&startblock=0&endblock=99999999&sort=asc&apikey={$this->apiKey}";
         } else {
-            return "Empty API key, please set WORKEN_POLYGONSCAN_APIKEY in your environment variables. You can get it from https://polygonscan.com/apis";
+            throw new APIException("Empty API key, please set WORKEN_POLYGONSCAN_APIKEY in your environment variables. You can get it from https://polygonscan.com/apis");
         }
         $response = file_get_contents($url);
-        $data = json_decode($response, true);
+        $result = json_decode($response, true);
 
         $history = [];
-        if ($data['status'] == '1' && $data['message'] == 'OK') {
-            foreach ($data['result'] as $transaction) {
+        if ($result['status'] == '1' && $result['message'] == 'OK') {
+            foreach ($result['result'] as $transaction) {
                 $history[] = [
                     'blockNumber' => $transaction['blockNumber'],
                     'timeStamp' => date('Y-m-d H:i:s', $transaction['timeStamp']),
@@ -132,19 +134,7 @@ class WalletService {
                 return $history;
             }
         } else {
-            return $data['message'];
+            throw new APIException($result['message']);
         }
-    }
-
-    private function getERC20ABIBalance() {
-        return '[
-            {
-              "constant": true,
-              "inputs": [{"name": "_owner", "type": "address"}],
-              "name": "balanceOf",
-              "outputs": [{"name": "balance", "type": "uint256"}],
-              "type": "function"
-            }
-          ]';
     }
 }

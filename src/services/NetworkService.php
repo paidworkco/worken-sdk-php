@@ -3,6 +3,8 @@ namespace Worken\Services;
 
 use Web3\Web3;
 use Worken\Utils\Converter;
+use Worken\Exceptions\APIException;
+use Worken\Exceptions\Web3ConnectException;
 
 class NetworkService {
     private $web3;
@@ -24,12 +26,12 @@ class NetworkService {
         if ($result['status'] == '1' && $result['message'] == 'OK') {
             return intval($result['result']);
         } else {
-            return $result['message'];
+            throw new APIException($result['message']);
         }
     }
 
-    // testing
-    public function getEstimatedGas($from, $to, $amount) {
+    // $amount string or int?? limit of int in PHP is 2147483647
+    public function getEstimatedGas(string $from, string $to, string $amount) {
         $info = [];
         $result = [];
         $transaction = [
@@ -40,8 +42,7 @@ class NetworkService {
     
         $this->web3->eth->estimateGas($transaction, function ($err, $result) use (&$info){
             if ($err !== null) {
-                echo 'Error: ' . $err->getMessage();
-                return;
+                throw new Web3ConnectException($err->getMessage());
             }
             $info['estimatedgas'] = $result;
         });
@@ -58,8 +59,7 @@ class NetworkService {
         // Get latest block number
         $this->web3->eth->blockNumber(function ($err, $block) use (&$status) {
             if ($err !== null) {
-                $status['blockNumberError'] = 'Error: ' . $err->getMessage();
-                return;
+                throw new Web3ConnectException($err->getMessage());
             }
             $status['latestBlock'] = intval($block->toString());
         });
@@ -67,8 +67,7 @@ class NetworkService {
         // Get hashrate of the network
         $this->web3->eth->hashrate(function ($err, $hashrate) use (&$status) {
             if ($err !== null) {
-                $status['hashrateError'] = 'Error: ' . $err->getMessage();
-                return;
+                throw new Web3ConnectException($err->getMessage());
             }
             $status['hashrate'] = $hashrate->toString();
         });
@@ -76,8 +75,7 @@ class NetworkService {
         // Get gas price
         $this->web3->eth->gasPrice(function ($err, $gasPrice) use (&$status) {
             if ($err !== null) {
-                $status['gasPriceError'] = 'Error: ' . $err->getMessage();
-                return;
+                throw new Web3ConnectException($err->getMessage());
             }
             $status['gasPriceWEI'] = $gasPrice->toString(); 
             $status['gasPriceEther'] = Converter::convertWEItoEther($gasPrice->toString()); 
@@ -87,7 +85,7 @@ class NetworkService {
         // Get syncing status
         $this->web3->eth->syncing(function ($err, $syncing) use (&$status){
             if ($err !== null) {
-                return;
+                throw new Web3ConnectException($err->getMessage());
             }
             $status['syncStatus'] = $syncing;
         });

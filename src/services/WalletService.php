@@ -3,6 +3,7 @@ namespace Worken\Services;
 
 use Web3\Contract;
 use Web3\Web3;
+use Worken\Utils\Converter;
 
 class WalletService {
     private $web3;
@@ -25,20 +26,20 @@ class WalletService {
         $contract = new Contract($this->web3->provider, $this->getERC20ABIBalance());
         $contract->at($this->contractAddress);
 
-        $balance = null;
+        $result = [];
         
-        $contract->call('balanceOf', $address, function ($err, $result) use (&$balance) {
+        $contract->call('balanceOf', $address, function ($err, $balance) use (&$result) {
             if ($err !== null) {
                 //TO DO: error handlings
                 return;
             }
-
-            $balancestring = $result['balance']->toString();
-            $balancetokens = bcdiv($balancestring, bcpow('10', '18'), 0);
-            $balance = intval($balancetokens);
+            $result['balanceWORKWEI'] = $balance['balance']->toString();
+            $result['balanceWORKEther'] = Converter::convertWEItoEther($result['balanceWORKWEI']); // Convert to Ether
+            $result['balanceWORK'] = intval($result['balanceWORKEther']);
+            $result['balanceWORKHex'] = "0x" . $balance['balance']->toHex(); // 0x... hex value
         });
 
-        return $balance;
+        return $result;
     }
     
     /**
@@ -64,6 +65,7 @@ class WalletService {
         return $info;
     }
 
+    // TO DO - create wallet, not finished
     public function createWallet() {
         $configargs = array(
             'private_key_bits' => 2048,

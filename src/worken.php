@@ -5,7 +5,7 @@ namespace Worken;
 use Worken\Services\WalletService;
 // use Worken\Services\TransactionService;
 // use Worken\Services\ContractService;
-// use Worken\Services\NetworkService;
+use Worken\Services\NetworkService;
 use Web3\Web3;
 
 class Worken {
@@ -16,6 +16,7 @@ class Worken {
     private $web3;
     private $contractAddress;
     private $nodeUrl;
+    private $apiKey;
 
 
     /**
@@ -27,11 +28,12 @@ class Worken {
     public function __construct() {
         $this->contractAddress = "0x3AE0726b5155fCa70dd79C0839B07508Ce7F0F13";
         $this->nodeUrl = "https://rpc-mumbai.maticvigil.com/";
+        $this->apiKey = getenv('WORKEN_POLYGONSCAN_APIKEY');
         $this->web3 = new Web3($this->nodeUrl);
 
-        $this->wallet = new WalletService($this->web3, $this->contractAddress);
+        $this->wallet = new WalletService($this->web3, $this->contractAddress, $this->apiKey);
         // $this->transactionService = new TransactionService($this->web3);
         // $this->contractService = new ContractService($this->web3, $this->contractAddress);
-        // $this->networkService = new NetworkService($this->web3);
+        $this->network = new NetworkService($this->web3, $this->contractAddress, $this->apiKey);
     }
 }

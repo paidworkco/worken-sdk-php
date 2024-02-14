@@ -2,17 +2,21 @@
 namespace Worken\Services;
 
 use Web3\Contract;
-use Web3\Utils;
-use phpseclib\Math\BigInteger;
+use Web3\Web3;
+use Worken\Utils\Converter;
+use Worken\Utils\ABI;
+use Worken\Utils\KeyFactory;
+
 
 class WalletService {
     private $web3;
     private $contractAddress;
-    private $EtherscanAPI = "";
+    private $apiKey;
 
-    public function __construct($web3, $contractAddress) {
+    public function __construct(Web3 $web3, string $contractAddress, string $apiKey) {
         $this->web3 = $web3;
         $this->contractAddress = $contractAddress;
+        $this->apiKey = $apiKey;
     }
 
     /**
@@ -22,23 +26,21 @@ class WalletService {
      * @return string
      */
     public function getBalance(string $address) {
-        $contract = new Contract($this->web3->provider, $this->getERC20ABIBalance());
+        $contract = new Contract($this->web3->provider, ABI::ERC20Balance());
         $contract->at($this->contractAddress);
 
-        $balance = null;
+        $result = [];
         
-        $contract->call('balanceOf', $address, function ($err, $result) use (&$balance) {
+        $contract->call('balanceOf', $address, function ($err, $balance) use (&$result) {
             if ($err !== null) {
-                //TO DO: error handlings
-                return;
+                return $result['walletBalanceWORK']['error'] = $err->getMessage();
             }
-
-            $balancestring = $result['balance']->toString();
-            $balancetokens = bcdiv($balancestring, bcpow('10', '18'), 0);
-            $balance = intval($balancetokens);
+            $result['walletBalanceWORK']['WEI'] = $balance['balance']->toString();
+            $result['walletBalanceWORK']['Ether'] = Converter::convertWEItoEther($result['walletBalanceWORK']['WEI']); // Convert to Ether
+            $result['walletBalanceWORK']['Hex'] = "0x" . $balance['balance']->toHex(); // 0x... hex value
         });
 
-        return $balance;
+        return $result;
     }
     
     /**
@@ -53,8 +55,7 @@ class WalletService {
         // nonce (liczby transakcji)
         $this->web3->eth->getTransactionCount($address, function ($err, $nonce) use (&$info) {
             if ($err !== null) {
-                $info['nonceError'] = 'Error while getting nonce';
-                return;
+                $info['nonce']['error'] = $err->getMessage();
             }
             $info['nonce'] = $nonce->toString();
         });
@@ -64,34 +65,20 @@ class WalletService {
         return $info;
     }
 
-    public function createWallet() {
-        $configargs = array(
-            'private_key_bits' => 2048,
-            'default_md' => "sha256",
-        );
-        $opensslConfigPath = getenv('WORKEN_OPENSSL_CONF') ?: __DIR__ . '/assets/openssl.cnf'; 
-        if (file_exists($opensslConfigPath)) {
-            $configargs['config'] = $opensslConfigPath;
-        }
-    
-        $res = openssl_pkey_new($configargs);
-    
-        if (!$res) {
-            return "error";
-        }
-        if (!openssl_pkey_export($res, $privKey, NULL, $configargs)) {
-            return "error_exporting_key";
-        }
-        $keyDetails = openssl_pkey_get_details($res);
-        if (!$keyDetails) {
-            return "error_getting_details"; 
-        }
-        $privKey = $keyDetails['key']; 
-    
-        return [
-            'privateKey' => $privKey,
-            'publicKey' => $keyDetails
-        ];
+    // required gmp extension in php.ini
+    public function createWallet(int $words)
+    {
+        $result = [];
+
+        $seedphrase = KeyFactory::generateSeedPhrase($words);
+        $result['seedphrase'] = $seedphrase->words;
+
+        $keys = KeyFactory::generateKeysfromSeedPhrase($seedphrase->entropy);
+        $result['privateKey'] = $keys->privateKey;
+        $result['publicKey'] = $keys->publicKey;
+        $result['publicKeyCompressed'] = $keys->publicKeyCompressed;
+        $result['address'] = KeyFactory::generateAddressfromPublicKey($keys->publicKey);
+        return $result;
     }
 
     /**
@@ -101,49 +88,44 @@ class WalletService {
      * @return array
      */
     public function getHistory(string $address) {
-        $polygonscanAPIKey = getenv('WORKEN_POLYGONSCAN_APIKEY');
-        if($polygonscanAPIKey) {
-            $this->EtherscanAPI = "https://api.polygonscan.com/api?module=account&action=txlist&address={$address}&startblock=0&endblock=99999999&sort=asc&apikey={$polygonscanAPIKey}";
-        } else {
-            return "Empty API key, please set WORKEN_POLYGONSCAN_APIKEY in your environment variables. You can get it from https://polygonscan.com/apis";
+        if (empty($this->apiKey)) {
+            $history['error'] = "Empty API key, please set WORKEN_POLYGONSCAN_APIKEY in your environment variables. You can get it from https://polygonscan.com/apis";
         }
-        $response = file_get_contents($this->EtherscanAPI);
-        $data = json_decode($response, true);
-
+    
+        $url = "https://api.polygonscan.com/api?module=account&action=txlist&address={$address}&startblock=0&endblock=99999999&sort=asc&apikey={$this->apiKey}";
         $history = [];
-        if ($data['status'] == '1' && $data['message'] == 'OK') {
-            foreach ($data['result'] as $transaction) {
-                $history[] = [
-                    'blockNumber' => $transaction['blockNumber'],
-                    'timeStamp' => date('Y-m-d H:i:s', $transaction['timeStamp']),
-                    'hash' => $transaction['hash'],
-                    'nonce' => $transaction['nonce'],
-                    'blockHash' => $transaction['blockHash'],
-                    'transactionIndex' => $transaction['transactionIndex'],
-                    'from' => $transaction['from'],
-                    'to' => $transaction['to'],
-                    'value' => $transaction['value'],
-                    'gas' => $transaction['gas'],
-                    'gasPrice' => $transaction['gasPrice'],
-                    'isError' => $transaction['isError'],
-                    'txreceipt_status' => $transaction['txreceipt_status'],
-                ];
+        $response = file_get_contents($url);
+        if ($response === FALSE) {
+            $history['error'] = "Error while fetching data from Polygonscan.";
+        }
+
+        $result = json_decode($response, true);
+    
+        if ($result['status'] == '0') {
+            if ($result['message'] == 'No transactions found') {
                 return $history;
             }
-        } else {
-            return $data['message'];
+            $result['error'] = $result['message'];
         }
-    }
 
-    private function getERC20ABIBalance() {
-        return '[
-            {
-              "constant": true,
-              "inputs": [{"name": "_owner", "type": "address"}],
-              "name": "balanceOf",
-              "outputs": [{"name": "balance", "type": "uint256"}],
-              "type": "function"
-            }
-          ]';
+        foreach ($result['result'] as $transaction) {
+            $history[] = [
+                'blockNumber' => $transaction['blockNumber'],
+                'timeStamp' => date('Y-m-d H:i:s', $transaction['timeStamp']),
+                'hash' => $transaction['hash'],
+                'nonce' => $transaction['nonce'],
+                'blockHash' => $transaction['blockHash'],
+                'transactionIndex' => $transaction['transactionIndex'],
+                'from' => $transaction['from'],
+                'to' => $transaction['to'],
+                'value' => $transaction['value'],
+                'gas' => $transaction['gas'],
+                'gasPrice' => $transaction['gasPrice'],
+                'isError' => $transaction['isError'],
+                'txreceipt_status' => $transaction['txreceipt_status'],
+            ];
+        }
+    
+        return $history;
     }
 }

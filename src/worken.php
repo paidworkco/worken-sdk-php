@@ -3,8 +3,8 @@
 namespace Worken;
 
 use Worken\Services\WalletService;
-// use Worken\Services\TransactionService;
-// use Worken\Services\ContractService;
+use Worken\Services\TransactionService;
+use Worken\Services\ContractService;
 use Worken\Services\NetworkService;
 use Web3\Web3;
 
@@ -32,8 +32,8 @@ class Worken {
         $this->web3 = new Web3($this->nodeUrl);
 
         $this->wallet = new WalletService($this->web3, $this->contractAddress, $this->apiKey);
-        // $this->transactionService = new TransactionService($this->web3);
-        // $this->contractService = new ContractService($this->web3, $this->contractAddress);
+        $this->contract = new ContractService($this->web3, $this->contractAddress);
         $this->network = new NetworkService($this->web3, $this->contractAddress, $this->apiKey);
+        $this->transaction = new TransactionService($this->web3, $this->wallet, $this->network, $this->contractAddress);
     }
 }

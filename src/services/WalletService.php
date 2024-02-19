@@ -26,7 +26,7 @@ class WalletService {
      * @return string
      */
     public function getBalance(string $address) {
-        $contract = new Contract($this->web3->provider, ABI::ERC20Balance());
+        $contract = new Contract($this->web3->provider, ABI::ERC20());
         $contract->at($this->contractAddress);
 
         $result = [];

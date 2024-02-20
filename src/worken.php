@@ -20,10 +20,7 @@ class Worken {
 
 
     /**
-     * Worken constructor
-     * 
-     * @param string $nodeUrl
-     * @param string $contractAddress
+     * Worken-SDK constructor
      */
     public function __construct() {
         $this->contractAddress = "0x3AE0726b5155fCa70dd79C0839B07508Ce7F0F13";
@@ -34,6 +31,6 @@ class Worken {
         $this->wallet = new WalletService($this->web3, $this->contractAddress, $this->apiKey);
         $this->contract = new ContractService($this->web3, $this->contractAddress);
         $this->network = new NetworkService($this->web3, $this->contractAddress, $this->apiKey);
-        $this->transaction = new TransactionService($this->web3, $this->wallet, $this->network, $this->contractAddress);
+        $this->transaction = new TransactionService($this->web3, $this->wallet, $this->network, $this->contractAddress, $this->apiKey);
     }
 }

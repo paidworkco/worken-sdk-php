@@ -20,10 +20,10 @@ class WalletService {
     }
 
     /**
-     * Get balance of given wallet address
+     * Get balance WORK tokens of given wallet address
      * 
      * @param string $address
-     * @return string
+     * @return string Balance in WEI, Ether and Hex value
      */
     public function getBalance(string $address) {
         $contract = new Contract($this->web3->provider, ABI::ERC20());
@@ -33,11 +33,11 @@ class WalletService {
         
         $contract->call('balanceOf', $address, function ($err, $balance) use (&$result) {
             if ($err !== null) {
-                return $result['walletBalanceWORK']['error'] = $err->getMessage();
+                return $result['error'] = $err->getMessage();
             }
-            $result['walletBalanceWORK']['WEI'] = $balance['balance']->toString();
-            $result['walletBalanceWORK']['Ether'] = Converter::convertWEItoEther($result['walletBalanceWORK']['WEI']); // Convert to Ether
-            $result['walletBalanceWORK']['Hex'] = "0x" . $balance['balance']->toHex(); // 0x... hex value
+            $result['WEI'] = $balance['balance']->toString();
+            $result['Ether'] = Converter::convertWEItoEther($result['WEI']); // Convert to Ether
+            $result['Hex'] = "0x" . $balance['balance']->toHex(); // 0x... hex value
         });
 
         return $result;
@@ -65,7 +65,12 @@ class WalletService {
         return $info;
     }
 
-    // required gmp extension in php.ini
+    /**
+     * Create new ETH wallet
+     * 
+     * @param int $words Number of words for seedphrase
+     * @return array Wallet information (seedphrase, private key, public key, compressed public key, address)
+     */
     public function createWallet(int $words)
     {
         $result = [];
@@ -91,8 +96,13 @@ class WalletService {
         if (empty($this->apiKey)) {
             $history['error'] = "Empty API key, please set WORKEN_POLYGONSCAN_APIKEY in your environment variables. You can get it from https://polygonscan.com/apis";
         }
-    
-        $url = "https://api.polygonscan.com/api?module=account&action=txlist&address={$address}&startblock=0&endblock=99999999&sort=asc&apikey={$this->apiKey}";
+
+        // mainnet
+        // $url = "https://api.polygonscan.com/api?module=account&action=txlist&address={$address}&startblock=0&endblock=99999999&sort=asc&apikey={$this->apiKey}";
+        // testnet - test endpoint
+        // $url = "https://api-testnet.polygonscan.com/api?module=account&action=txlist&address={$address}&startblock=0&endblock=99999999&sort=asc&apikey={$this->apiKey}";
+        // testnet 2 - internal transactions similiar 
+        $url = "https://api-testnet.polygonscan.com/api?module=account&action=txlistinternal&address={$address}&startblock=0&endblock=99999999&sort=asc&apikey={$this->apiKey}";
         $history = [];
         $response = file_get_contents($url);
         if ($response === FALSE) {
@@ -109,21 +119,7 @@ class WalletService {
         }
 
         foreach ($result['result'] as $transaction) {
-            $history[] = [
-                'blockNumber' => $transaction['blockNumber'],
-                'timeStamp' => date('Y-m-d H:i:s', $transaction['timeStamp']),
-                'hash' => $transaction['hash'],
-                'nonce' => $transaction['nonce'],
-                'blockHash' => $transaction['blockHash'],
-                'transactionIndex' => $transaction['transactionIndex'],
-                'from' => $transaction['from'],
-                'to' => $transaction['to'],
-                'value' => $transaction['value'],
-                'gas' => $transaction['gas'],
-                'gasPrice' => $transaction['gasPrice'],
-                'isError' => $transaction['isError'],
-                'txreceipt_status' => $transaction['txreceipt_status'],
-            ];
+            $history[] = $transaction;
         }
     
         return $history;

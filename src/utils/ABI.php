@@ -2,6 +2,11 @@
 namespace Worken\Utils;
 
 class ABI {
+    /**
+     * ERC20 ABI of the contract Worken(WORK)
+     * 
+     * @return string
+     */
     public static function ERC20() {
         return '[
             {

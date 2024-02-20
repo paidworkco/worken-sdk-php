@@ -8,7 +8,8 @@
       "web3p/web3.php": "dev-master",
       "kornrunner/keccak": "^1.1",
       "bitwasp/bitcoin": "0.0.35.x-dev",
-      "furqansiddiqui/bip39-mnemonic-php": "dev-master"
+      "furqansiddiqui/bip39-mnemonic-php": "dev-master",
+        "web3p/ethereum-tx": "dev-master"
     },
     "license": "MIT",
     "minimum-stability": "dev",

@@ -2,56 +2,85 @@
 namespace Worken\Services;
 
 use Web3\Web3;
+use Web3\Contract;
+use Web3\Utils;
 use Worken\Utils\Converter;
+use Worken\Utils\ABI;
 
 class NetworkService {
     private $web3;
     private $contractAddress;
     private $apiKey;
+    private $contract;
 
     public function __construct(Web3 $web3, string $contractAddress, string $apiKey) {
         $this->web3 = $web3;
         $this->apiKey = $apiKey;
         $this->contractAddress = $contractAddress;
+        $this->contract = new Contract($this->web3->provider, ABI::ERC20());
+        $this->contract->at($this->contractAddress);
     }
 
-    public function getBlockInformation(int $blockNumber) { 
-        $url = "https://api.polygonscan.com/api?module=account&action=tokentx&contractaddress={$this->contractAddress}&startblock={$blockNumber}&endblock={$blockNumber}&sort=asc&apikey={$this->apiKey}";
-    
+    /**
+     * Get block information
+     * 
+     * @param string $blockNumber block number in Hex
+     * @return array
+     */
+    public function getBlockInformation(string $blockNumber) { 
+        // mainnet 
+        //$url = "https://api.polygonscan.com/api?module=account&action=tokentx&contractaddress={$this->contractAddress}&startblock={$blockNumber}&endblock={$blockNumber}&sort=asc&apikey={$this->apiKey}";
+        // testnet
+        $url = "https://api-testnet.polygonscan.com/api?module=account&action=tokentx&contractaddress={$this->contractAddress}&startblock={$blockNumber}&endblock={$blockNumber}&sort=asc&apikey={$this->apiKey}";
         $response = file_get_contents($url);
         $result = json_decode($response, true);
     
         if ($result['status'] == '1' && $result['message'] == 'OK') {
-            return intval($result['result']);
+            return $result['result'];
         } else {
             $return['error'] = $result['message'];
             return $return;
         }
     }
 
-    // $amount string or int?? limit of int in PHP is 2147483647
+    /**
+     * Get estimated gas for transaction (in WEI, Ether and Hex value)
+     * 
+     * @param string $from Sender address in Hex
+     * @param string $to Receiver address in Hex
+     * @param string $amount Amount to send in WEI
+     * @return array
+     */
     public function getEstimatedGas(string $from, string $to, string $amount) {
         $info = [];
         $result = [];
+        $data = '0x' . $this->contract->getData('transfer', $to, $amount);
+
         $transaction = [
             'from' => $from,
-            'to' => $to,
-            'amount' => $amount
+            'to' => $this->contractAddress,
+            'data' => $data
         ];
-    
-        $this->web3->eth->estimateGas($transaction, function ($err, $result) use (&$info){
+
+        $this->web3->eth->estimateGas($transaction, function ($err, $gas) use (&$info) {
             if ($err !== null) {
-                $info['estimatedgas']['error'] = $err->getMessage();
+                $info['error'] = $err->getMessage();
+            } else {
+                $info['estimatedGas'] = $gas; 
             }
-            $info['estimatedgas'] = $result;
         });
-        $gasValue = $info['estimatedgas']; 
-        $result['estimatedGas']['WEI'] = $gasValue->toString(); // in WEI
-        $result['estimatedGas']['Ether'] = Converter::convertWEItoEther($result['estimatedGas']['WEI']); // Convert to Ether
-        $result['estimatedGas']['Hex'] = "0x" . $gasValue->toHex(); // 0x... hex value
+        $gasValue = $info['estimatedGas']; 
+        $result['WEI'] = $gasValue->toString(); // in WEI
+        $result['Ether'] = Converter::convertWEItoEther($result['WEI']); // Convert to Ether
+        $result['Hex'] = "0x" . $gasValue->toHex(); // 0x... hex value
         return $result;
     }
 
+    /**
+     * Get network status information (latest block, hashrate, gas price, syncing status)
+     * 
+     * @return array
+     */
     public function getNetworkStatus() {
         $status = [];
     
@@ -91,22 +120,29 @@ class NetworkService {
         return $status;
     }
 
+    /**
+     * Get congestion status of the network (Safe, Propose, Fast gas price)
+     * 
+     * @return array
+     */
     public function getMonitorCongestion() {
         $status = [];
-        
-        $gasOracleUrl = "https://api.polygonscan.com/api?module=gastracker&action=gasoracle&apikey={$this->apiKey}";
-        $gasData = file_get_contents($gasOracleUrl);
+        // mainnet
+        // $url = "https://api.polygonscan.com/api?module=gastracker&action=gasoracle&apikey={$this->apiKey}";
+        // testnet
+        $url = "https://api-testnet.polygonscan.com/api?module=gastracker&action=gasoracle&apikey={$this->apiKey}";
+        $gasData = file_get_contents($url);
         if ($gasData !== false) {
             $gasData = json_decode($gasData, true);
             if ($gasData['status'] == '1' && isset($gasData['result'])) {
-                $status['GasPrice']['Safe'] = (float)$gasData['result']['SafeGasPrice'];
-                $status['GasPrice']['Propose'] = (float)$gasData['result']['ProposeGasPrice'];
-                $status['GasPrice']['Fast'] = (float)$gasData['result']['FastGasPrice'];
+                $status['Safe'] = (float)$gasData['result']['SafeGasPrice'];
+                $status['Propose'] = (float)$gasData['result']['ProposeGasPrice'];
+                $status['Fast'] = (float)$gasData['result']['FastGasPrice'];
             } else {
-                $status['GasPrice']['error'] = "Could not retrieve gas price data";
+                $status['error'] = "Could not retrieve gas price data";
             }
         } else {
-            $status['GasPrice']['error'] = "Failed to connect to Polygonscan API";
+            $status['error'] = "Failed to connect to Polygonscan API";
         }
         return $status;
     }

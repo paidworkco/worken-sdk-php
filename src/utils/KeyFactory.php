@@ -9,6 +9,12 @@ use kornrunner\Keccak;
 use BitWasp\Bitcoin\Key\PrivateKeyFactory;
 
 class KeyFactory {
+    /**
+     * Generate seed phrase
+     * 
+     * @param int $words Number of words in mnemonic
+     * @return object 
+     */
     public static function generateSeedPhrase(int $words) {
         $response = new \stdClass();
         if (!in_array($words, [12, 15, 18, 21, 24])) {
@@ -21,6 +27,12 @@ class KeyFactory {
         return $response;
     }
 
+    /**
+     * Generate keys from seed phrase
+     * 
+     * @param string $entropy Entropy of mnemonic
+     * @return object Keys (private key, public key, compressed public key)
+     */
     public static function generateKeysfromSeedPhrase(string $entropy) {
         $response = new \stdClass();
 
@@ -35,6 +47,12 @@ class KeyFactory {
         return $response;
     }
 
+    /**
+     * Generate address from public key
+     * 
+     * @param string $publicKey Public key in Hex
+     * @return string Address in Hex
+     */
     public static function generateAddressfromPublicKey(string $publicKey) {
         $publicKey = str_replace('0x', '', $publicKey);
 

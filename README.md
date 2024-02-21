@@ -129,7 +129,19 @@ This structure outlines the output of the `createWallet()` function, which gener
 
 ### Contract
 
-TODO: Show contract status, show contract function
+#### Show contract status 
+```php
+$worken->contract->getContractStatus()
+```
+**Output**
+
+- `status(boolean)`: `true` - contract active, `false` - contract unactive & freezed
+
+#### Show contract functions
+```php
+$worken->contract->getContractFunctions()
+```
+This function give all ABI functions of Worken contract in `string`.
 
 ### Transactions
 
@@ -160,7 +172,35 @@ $worken->transaction->getTransactionStatus(string $txHash)
 
 - `status (int)`: 0 - Success, 1 - Failed, 2 - Transaction not found or pending
 
-TODO: receive transaction, show recent transaction
+#### Show recent transactions (10)
+```php
+$worken->transaction->getRecentTransactions()
+```
+This function gives latest 10 transactions on Worken contract. Each transaction contains the variables described below.
+
+**Output**
+- `blockNumber`: The block number in which the transaction was included. This is a unique identifier for the block on the blockchain.
+- `blockHash`: The hash of the block. This is a unique 66-character hexadecimal string identifying the block.
+- `timeStamp`: The timestamp when the block was mined, expressed as a Unix epoch time.
+- `hash`: The unique hash of the transaction. This 66-character hexadecimal string uniquely identifies the transaction on the blockchain.
+- `nonce`: A value used to ensure each transaction is processed only once by the blockchain network.
+- `transactionIndex`: The index position of the transaction in the block.
+- `from`: The address of the sender. This is the account that initiated the transaction.
+- `to`: The address of the recipient. This is the account that received the transaction. For contract creation transactions, this field may be empty.
+- `value`: The amount of Ether (in WEI) transferred in the transaction. For transactions involving the transfer of ERC-20 tokens, this value is 0, and the token transfer details are encoded in the input data.
+- `gas`: The total amount of gas provided by the sender for the transaction.
+- `gasPrice`: The price (in Wei) per unit of gas specified for the transaction.
+- `input`: The data sent along with the transaction. For simple Ether transfers, this is usually empty. For calls to contract functions, this contains the encoded function signature and parameters.
+- `methodId`: The hash of the function signature if the transaction is a call to a smart contract function.
+- `functionName`: The human-readable signature of the function called in the contract, including parameter types.
+- `contractAddress`: The contract address for contract creation transactions. For non-contract creation transactions, this field is empty.
+cumulativeGasUsed: The total amount of gas used in the block containing this transaction up until this transaction.
+- `txreceipt_status`: The status of the transaction receipt. 1 indicates success, while 0 indicates failure.
+- `gasUsed`: The amount of gas that was used by this specific transaction.
+- `confirmations`: The number of confirmations the transaction has received. This is the number of blocks added to the blockchain since the block containing this transaction.
+- `isError`: Indicates if the transaction encountered an error during execution. 0 means no error, and 1 would indicate an error occurred.
+
+TODO: receive transaction
 
 ### Network
 
@@ -172,7 +212,28 @@ $worken->network->getBlockInformation(int $blockNumber)
 | :------------ | :------- | :---------------------------- |
 | `blockNumber` | `int`    | **Required**. Number of block |
 
-TO DO - info about output from Polygonscan API
+This function retrieves detailed information about a specific block on the blockchain.
+
+**Output**
+- `blockNumber`: The unique number of the block in which this transaction was included.
+- `timeStamp`: The timestamp when the block was mined, represented as Unix epoch time.
+- `hash`: The unique transaction identifier, a 66-character hexadecimal string.
+- `nonce`: A number used once by the sending account to prevent transaction replay attacks.
+- `blockHash`: The hash of the block containing this transaction, a 66-character hexadecimal string indicating the block's unique identifier.
+- `from`: The address of the sender.
+- `contractAddress`: The address of the contract.
+- `to`: The recipient's address. In the case of contract creation like Worken(WORK), this field may be empty.
+- `value`: The amount of Ether (or the token's smallest unit if an ERC-20 transaction) transferred, in Wei.
+- `tokenName`: The name of the token being transferred, if applicable.
+- `tokenSymbol`: The symbol of the token being transferred, if applicable.
+- `tokenDecimal`: The decimal places of the token, indicating how the token's value can be divided.
+- `transactionIndex`: The index position of the transaction within the block.
+- `gas`: The maximum amount of gas the sender is willing to use for the transaction.
+- `gasPrice`: The price (in Wei) per unit of gas the sender is willing to pay.
+- `gasUsed`: The actual amount of gas used for processing the transaction.
+- `cumulativeGasUsed`: The total amount of gas used in the block up until this transaction.
+- `input`: The data sent along with the transaction. For some transactions, this may be 'deprecated' or contain the input data to a contract call.
+- `confirmations`: The number of confirmations the transaction has received, indicating how many blocks have been mined since this transaction's block.
 
 #### Show estimated gas
 ```php

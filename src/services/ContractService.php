@@ -1,43 +1,61 @@
 <?php
 namespace Worken\Services;
 
-use Web3\Contract;
 use Web3\Web3;
-use Web3\Utils;
-use Worken\Utils\ABI;
 
 class ContractService {
     private $web3;
     private $contractAddress;
     private $contract;
+    private $apiKey;
 
-    public function __construct(Web3 $web3, string $contractAddress) {
+    public function __construct(Web3 $web3, string $contractAddress, string $apiKey) {
         $this->web3 = $web3;
         $this->contractAddress = $contractAddress;
-        $this->contract = new Contract($this->web3->provider, ABI::ERC20());
-        $this->contract->at($this->contractAddress);
+        $this->apiKey = $apiKey;
     }
 
-    // public function showContractStatus($callback) { // TO DO
-    //     $this->web3->eth->getBalance($this->contractAddress, function ($err, $balance) use ($callback) {
-    //         if ($err !== null) {
-    //             $callback('Error: ' . $err->getMessage(), null);
-    //             return;
-    //         }
-    //         $balanceInEther = Utils::fromWei($balance, 'ether');
-    //         $callback(null, ['BalanceWEI' => $balance->toString(), 'BalanceEther' => $balanceInEther]);
-    //     });
-    // }
-
-    // not finished
-    public function showContractFunction() {
-        $abi = $this->contract->getAbi();
-        $functions = [];
-        foreach ($abi as $item) {
-            if ($item['type'] === 'function') {
-                array_push($functions, $item['name']);
+    /**
+     * Get contract status
+     * 
+     * @return array
+     */
+    public function getContractStatus() { 
+        $result = [];
+        $this->web3->eth->getCode($this->contractAddress, function ($err, $code) use (&$result) {
+            if ($err !== null) {
+                $result['error'] = $err->getMessage();
+                return;
             }
+            if ($code != '0x') { // Kontrakt istnieje
+                $result['status'] = true;
+            } else { // Kontrakt nie istnieje lub został zniszczony
+                $result['status'] = false;
+            }
+        });
+        return $result;
+    }
+
+    /**
+     * Get contract ABI functions / contract must be verified on Polygonscan
+     * 
+     * @return string ABI 
+     */
+    public function getContractFunction() {
+        // testnet
+        $url = "https://api-testnet.polygonscan.com/api?module=contract&action=getsourcecode&address={$this->contractAddress}&apikey={$this->apiKey}";
+        // mainnet 
+        // $url = "https://api.polygonscan.com/api?module=contract&action=getsourcecode&address={$this->contractAddress}&apikey={$this->apiKey}";
+        $abi = "";
+        $response = file_get_contents($url);
+        if ($response === FALSE) {
+            $abi = "Error while fetching data from Polygonscan.";
         }
-        return $functions;
+
+        $result = json_decode($response, true);
+        if ($result['status'] == '1') {
+            $abi = $result['result'][0]['ABI'];
+        }
+        return $abi;
     }
 }

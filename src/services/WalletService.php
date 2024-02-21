@@ -115,7 +115,7 @@ class WalletService {
             if ($result['message'] == 'No transactions found') {
                 return $history;
             }
-            $result['error'] = $result['message'];
+            $result['error'] = $result['result'];
         }
 
         foreach ($result['result'] as $transaction) {

@@ -29,7 +29,7 @@ class Worken {
         $this->web3 = new Web3($this->nodeUrl);
 
         $this->wallet = new WalletService($this->web3, $this->contractAddress, $this->apiKey);
-        $this->contract = new ContractService($this->web3, $this->contractAddress);
+        $this->contract = new ContractService($this->web3, $this->contractAddress, $this->apiKey);
         $this->network = new NetworkService($this->web3, $this->contractAddress, $this->apiKey);
         $this->transaction = new TransactionService($this->web3, $this->wallet, $this->network, $this->contractAddress, $this->apiKey);
     }

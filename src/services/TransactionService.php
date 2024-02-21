@@ -108,4 +108,37 @@ class TransactionService {
         });
         return $status;
     }
+
+    /** 
+     * Get 10 recent transactions of the contract
+     * 
+     * @return array
+     */
+    public function getRecentTransactions() {
+        // testnet
+        $url = "https://api-testnet.polygonscan.com/api?module=account&action=txlist&address={$this->contractAddress}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey={$this->apiKey}";
+        // mainnet
+        // $url = "https://api.polygonscan.com/api?module=account&action=txlist&address={$this->contractAddress}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey={$this->apiKey}";
+        $history = [];
+        $response = file_get_contents($url);
+        if ($response === FALSE) {
+            $history['error'] = "Error while fetching data from Polygonscan.";
+        }
+
+        $result = json_decode($response, true);
+
+        if ($result['status'] == '0') {
+            if ($result['message'] == 'No transactions found') {
+                return $history;
+            }
+            $result['error'] = $result['result'];
+        }
+
+        if ($result['status'] == '1' && !empty($result['result'])) {
+            foreach ($result['result'] as $transaction) {
+                $history[] = $transaction;
+            }
+        }
+        return $history;
+    }
 }

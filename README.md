@@ -1,10 +1,9 @@
-<br />
 <p align="center">
   <img src="https://zrcdn.net/images/logos/paidwork/paidwork-logo-header-mobile-bitlabs.png" alt="Paidwork" />
 </p>
 
 <h3 align="center">
-  Make and receive secure transactions with Worken
+  Send and Receive secure transactions with Worken
 </h3>
 <p align="center">
   🚀 Over 15M+ Users using <a href="https://www.paidwork.com/?utm_source=github.com&utm_medium=referral&utm_campaign=readme">WORK!</a>

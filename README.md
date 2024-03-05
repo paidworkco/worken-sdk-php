@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://zrcdn.net/images/logos/paidwork/paidwork-logo-header-mobile-bitlabs.png" style="max-height:50px" alt="Paidwork" />
+  <img src="https://zrcdn.net/images/logos/paidwork/paidwork-logo-header-mobile-bitlabs.png" style="max-height:50 px;" alt="Paidwork" />
 </p>
 
 <h3 align="center">

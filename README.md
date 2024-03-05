@@ -7,7 +7,7 @@
   Make and receive secure transactions with Worken
 </h3>
 <p align="center">
-  <a href="https://www.paidwork.com/?utm_source=github.com&utm_medium=referral&utm_campaign=readme">🚀 Over 15M+ Users using WORK!</a>
+  🚀 Over 15M+ Users using <a href="https://www.paidwork.com/?utm_source=github.com&utm_medium=referral&utm_campaign=readme">WORK!</a>
 </p>
 
 <p align="center">

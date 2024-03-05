@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://zrcdn.net/images/logos/paidwork/paidwork-logo-header-mobile-bitlabs.png" alt="Paidwork" />
+  <img src="https://zrcdn.net/images/logos/paidwork/paidwork-logo-header-mobile-bitlabs.png" style="max-height:50px" alt="Paidwork" />
 </p>
 
 <h3 align="center">
@@ -29,7 +29,7 @@
     </a>
 </p>
 
-SDK library providing access to make easy and secure Blockchai transactions with Worken
+SDK library providing access to make easy and secure Blockchain transactions with Worken
 
 Feel free to try out our provided Postman collection. Simply click the button below to fork the collection and start testing.<br>
 

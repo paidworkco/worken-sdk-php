@@ -3,7 +3,7 @@
 </p>
 
 <h3 align="center">
-  Send & Receive secure transactions with Worken
+  Send & Receive secure Blockchain transactions with Worken
 </h3>
 <p align="center">
   🚀 Over 15M+ Users using <a href="https://www.paidwork.com/?utm_source=github.com&utm_medium=referral&utm_campaign=readme">WORK!</a>
@@ -29,7 +29,7 @@
     </a>
 </p>
 
-SDK library providing access to make easy and secure transactions with Worken
+SDK library providing access to make easy and secure Blockchai transactions with Worken
 
 Feel free to try out our provided Postman collection. Simply click the button below to fork the collection and start testing.<br>
 

@@ -6,7 +6,7 @@
   Send & Receive secure Blockchain transactions with Worken
 </h3>
 <p align="center">
-  🚀 Over 15M+ Users using Worken
+  🚀 Over 15M+ Users using Worken!
 </p>
 
 <p align="center">
